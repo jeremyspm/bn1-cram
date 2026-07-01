@@ -26,7 +26,8 @@ html[data-theme="light"]{
   --shadow:0 8px 30px rgba(30,50,90,.14);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{margin:0;height:100%;overscroll-behavior-y:none}
 body{
   background:linear-gradient(180deg,var(--bg),var(--bg2));
   color:var(--tx); font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -34,7 +35,7 @@ body{
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .wrap{max-width:var(--maxw);margin:0 auto;padding:14px 16px 120px}
-button{font-family:inherit;cursor:pointer;border:none;color:inherit;background:none}
+button{font-family:inherit;cursor:pointer;border:none;color:inherit;background:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .hidden{display:none !important}
 kbd{font:600 11px/1 ui-monospace,Menlo,Consolas,monospace;background:var(--card2);border:1px solid var(--line2);border-radius:5px;padding:2px 5px;color:var(--tx2)}
 
@@ -116,7 +117,9 @@ header{display:flex;align-items:center;gap:10px;margin:6px 0 12px;flex-wrap:wrap
 .points li .n{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--bg2);border:1px solid var(--line2);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--tx2);margin-top:1px}
 .points li.got{background:var(--gGood);border-color:rgba(57,217,138,.4)}
 .points li.got .n{background:var(--good);color:#04120b;border-color:var(--good)}
-.points li .chk{margin-left:auto;flex:0 0 auto;font-size:12px;color:var(--tx3);align-self:center;user-select:none}
+.points li .pt{flex:1;min-width:0}
+.points li .chk{margin-left:auto;flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:1.5px solid var(--line2);background:var(--bg2);align-self:center;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:transparent;user-select:none;transition:.12s}
+.points li.got .chk{background:var(--good);border-color:var(--good);color:#04120b}
 .recall-hint{font-size:12px;color:var(--tx3);margin:10px 0 2px}
 
 /* Action buttons */
@@ -144,6 +147,20 @@ header{display:flex;align-items:center;gap:10px;margin:6px 0 12px;flex-wrap:wrap
 /* Footer hint */
 .foot{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(0deg,var(--bg) 65%,transparent);padding:10px 16px calc(10px + env(safe-area-inset-bottom));text-align:center;font-size:11.5px;color:var(--tx3)}
 .foot .keys{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.kbdhint{opacity:.65;font-weight:600}
+.modal{-webkit-overflow-scrolling:touch}
+/* Phones & touch: drop the keyboard-shortcut footer and key hints, reclaim space, bigger tap targets */
+@media (max-width:560px), (pointer:coarse){
+  .foot{display:none}
+  .wrap{padding-bottom:28px}
+  .kbdhint{display:none}
+  .gk{display:none}
+  .seg{width:100%}
+  .seg button{flex:1 1 40%;padding:11px 10px;font-size:13px}
+  .iconbtn{width:42px;height:42px}
+  .grade{padding:15px 6px}
+  .points li{padding:12px 12px}
+}
 
 /* Modal */
 .modal{position:fixed;inset:0;background:rgba(6,10,18,.66);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:24px 14px;z-index:50;overflow:auto;animation:pop .2s ease}
@@ -152,7 +169,7 @@ header{display:flex;align-items:center;gap:10px;margin:6px 0 12px;flex-wrap:wrap
 .sheet .sub{color:var(--tx3);font-size:12.5px;margin-bottom:16px}
 .sheet h4{margin:18px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--tx3)}
 .topicgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media(max-width:520px){.topicgrid{grid-template-columns:1fr}.q{font-size:18px}.wrap{padding:12px 12px 120px}}
+@media(max-width:520px){.topicgrid{grid-template-columns:1fr}.q{font-size:18px}.wrap{padding:12px 12px 28px}}
 .tchip{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:13px;text-align:left;transition:.12s}
 .tchip:hover{border-color:var(--line2)}
 .tchip.on{border-color:var(--acc);background:rgba(79,157,255,.08)}
@@ -342,7 +359,7 @@ function render(){
 
   if(!revealed){
     h += '<div class="prompt-hint">Say or write your full answer <b>out loud</b> from memory — <b>then</b> reveal.</div>';
-    h += '<div class="actions"><button class="reveal" id="revealBtn">Reveal answer &nbsp;·&nbsp; <span style="opacity:.7">Space</span></button></div>';
+    h += '<div class="actions"><button class="reveal" id="revealBtn">Reveal answer<span class="kbdhint">&nbsp;·&nbsp; Space</span></button></div>';
   } else {
     h += '<div class="answer">';
     if(c.type==="structured"){
@@ -350,7 +367,7 @@ function render(){
       h += '<ul class="points">';
       (c.points||[]).forEach((p,i)=>{
         const got = recalledPts.has(i);
-        h += '<li class="'+(got?'got':'')+'" data-pt="'+i+'"><span class="n">'+(i+1)+'</span><span>'+esc(p)+'</span><span class="chk">'+(got?'✓ recalled':'tap if recalled')+'</span></li>';
+        h += '<li class="'+(got?'got':'')+'" data-pt="'+i+'"><span class="n">'+(i+1)+'</span><span class="pt">'+esc(p)+'</span><span class="chk">✓</span></li>';
       });
       h += '</ul>';
       const n=(c.points||[]).length;
